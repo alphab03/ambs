@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { db } from "../config/firebase.js";
 import { COLLECTIONS, ASSIGNMENT_STATUS } from "../models/schema.js";
-import { sendSms } from "../services/smsService.js";
+import { sendSms, assignmentUrl } from "../services/smsService.js";
 
 const router = Router();
 
@@ -32,9 +32,10 @@ router.post("/sms", async (req, res) => {
 
     // Proof is submitted via the dashboard (MMS-to-webhook media handling is a
     // follow-up; for now point them there so upload logic lives in one place).
+    const link = assignmentUrl(assignmentSnap.docs[0].id);
     return respond(
       res,
-      `Got it. Upload your proof on the dashboard before the deadline to lock in a "yes".`
+      `Got it. Upload your proof before the deadline to lock in a "yes".${link ? ` ${link}` : " Check the dashboard."}`
     );
   } catch (err) {
     console.error(err);
