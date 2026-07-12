@@ -11,11 +11,18 @@ export default function ChallengeDetail() {
   const [call, setCall] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
+  const [proofFile, setProofFile] = useState(null);
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState(null);
 
-  useEffect(() => {
+  function refetch() {
     // Reuse the history endpoint's shape by pulling the one assignment from the list.
     // A dedicated GET /api/challenges/:id is a natural follow-up once this is real traffic.
-    api.history(100).then((rows) => setAssignment(rows.find((r) => r.id === assignmentId)));
+    return api.history(100).then((rows) => setAssignment(rows.find((r) => r.id === assignmentId)));
+  }
+
+  useEffect(() => {
+    refetch();
   }, [assignmentId]);
 
   async function submitPrediction(choice) {
@@ -28,6 +35,21 @@ export default function ChallengeDetail() {
       setError(err.message);
     } finally {
       setSubmitting(false);
+    }
+  }
+
+  async function submitProof() {
+    if (!proofFile) return;
+    setUploading(true);
+    setUploadError(null);
+    try {
+      await api.uploadProof(assignmentId, proofFile);
+      await refetch();
+      setProofFile(null);
+    } catch (err) {
+      setUploadError(err.message);
+    } finally {
+      setUploading(false);
     }
   }
 
@@ -61,6 +83,28 @@ export default function ChallengeDetail() {
             </div>
           )}
           {error && <p style={{ color: "#f87171" }}>{error}</p>}
+        </div>
+      )}
+
+      {!isResolved && assignment.assignedUserId === userId && (
+        <div className="card">
+          <h3>Submit your proof</h3>
+          <p style={{ color: "var(--text-dim)" }}>
+            Upload a photo or video before the deadline to lock in a "yes".
+          </p>
+          <input
+            type="file"
+            accept="image/*,video/*"
+            capture="environment"
+            disabled={uploading}
+            onChange={(e) => setProofFile(e.target.files?.[0] || null)}
+          />
+          <div style={{ marginTop: 12 }}>
+            <button className="primary" disabled={!proofFile || uploading} onClick={submitProof}>
+              {uploading ? "Uploading…" : "Submit proof"}
+            </button>
+          </div>
+          {uploadError && <p style={{ color: "#f87171" }}>{uploadError}</p>}
         </div>
       )}
 
