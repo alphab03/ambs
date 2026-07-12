@@ -8,12 +8,21 @@ export async function sendSms(toPhone, body) {
   });
 }
 
-export function challengeMessage({ challengeText, deadlineAt }) {
+export function challengeMessage({ challengeText, deadlineAt, assignmentId }) {
   const time = new Date(deadlineAt).toLocaleTimeString("en-US", {
     hour: "numeric",
     minute: "2-digit",
   });
-  return `Today's challenge: ${challengeText}\n\nYou have until ${time} to do it and upload proof. No proof = automatic "no". Good luck.`;
+  const link = assignmentUrl(assignmentId);
+  return `Today's challenge: ${challengeText}\n\nYou have until ${time} to do it and upload proof. No proof = automatic "no". Good luck.${link ? `\n\n${link}` : ""}`;
+}
+
+// Builds a direct link to this assignment's page on the dashboard, if DASHBOARD_URL
+// is configured. Falls back to no link (rather than a broken one) if it's not set.
+export function assignmentUrl(assignmentId) {
+  const base = process.env.DASHBOARD_URL;
+  if (!base || !assignmentId) return null;
+  return `${base.replace(/\/$/, "")}/challenge/${assignmentId}`;
 }
 
 export function resultMessage({ name, outcome, challengeText }) {

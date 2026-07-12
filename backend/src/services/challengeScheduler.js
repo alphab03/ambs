@@ -91,7 +91,11 @@ export async function sendAssignmentSms(assignmentId) {
 
   await sendSms(
     user.phone,
-    challengeMessage({ challengeText: challengeDoc.data().text, deadlineAt: assignment.deadlineAt.toDate() })
+    challengeMessage({
+      challengeText: challengeDoc.data().text,
+      deadlineAt: assignment.deadlineAt.toDate(),
+      assignmentId,
+    })
   );
 }
 
