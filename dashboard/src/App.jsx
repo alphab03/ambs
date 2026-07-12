@@ -1,8 +1,6 @@
-import { Routes, Route, NavLink } from "react-router-dom";
+import { Routes, Route } from "react-router-dom";
 import { IdentityProvider, useIdentity } from "./IdentityContext.jsx";
-import History from "./pages/History.jsx";
-import Leaderboard from "./pages/Leaderboard.jsx";
-import ChallengeDetail from "./pages/ChallengeDetail.jsx";
+import Feed from "./pages/Feed.jsx";
 
 function IdentityPicker() {
   const { members, userId, selectUser } = useIdentity();
@@ -23,6 +21,8 @@ function IdentityPicker() {
   );
 }
 
+// One page: a reverse-chronological feed of challenges, ordered by post time. Upload your
+// proof right on your own card; everyone else's proof shows up inline once they post it.
 export default function App() {
   return (
     <IdentityProvider>
@@ -30,18 +30,9 @@ export default function App() {
         <h1>challenge-app</h1>
         <IdentityPicker />
         <Routes>
-          <Route path="/" element={<History />} />
-          <Route path="/leaderboard" element={<Leaderboard />} />
-          <Route path="/challenge/:assignmentId" element={<ChallengeDetail />} />
+          <Route path="/" element={<Feed />} />
+          <Route path="/challenge/:assignmentId" element={<Feed />} />
         </Routes>
-        <nav className="tabbar">
-          <NavLink to="/" className={({ isActive }) => (isActive ? "active" : "")}>
-            History
-          </NavLink>
-          <NavLink to="/leaderboard" className={({ isActive }) => (isActive ? "active" : "")}>
-            Leaderboard
-          </NavLink>
-        </nav>
       </div>
     </IdentityProvider>
   );
