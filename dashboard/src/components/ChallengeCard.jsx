@@ -6,13 +6,13 @@ const STATUS_LABEL = {
   expired: { text: "No proof", cls: "no" },
 };
 
-export default function DareCard({ assignment }) {
+export default function ChallengeCard({ assignment }) {
   const status = STATUS_LABEL[assignment.status] || STATUS_LABEL.pending;
   return (
-    <Link to={`/dare/${assignment.id}`} style={{ textDecoration: "none", color: "inherit" }}>
+    <Link to={`/challenge/${assignment.id}`} style={{ textDecoration: "none", color: "inherit" }}>
       <div className="card">
         <span className={`pill ${status.cls}`}>{status.text}</span>
-        <h3 style={{ marginTop: 8 }}>{assignment.dareText}</h3>
+        <h3 style={{ marginTop: 8 }}>{assignment.challengeText}</h3>
         <p style={{ color: "var(--text-dim)", margin: 0 }}>
           {assignment.assignedUserName} &middot;{" "}
           {new Date(assignment.sentAt?._seconds ? assignment.sentAt._seconds * 1000 : assignment.sentAt).toLocaleDateString()}

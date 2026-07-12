@@ -2,7 +2,7 @@ import { Routes, Route, NavLink } from "react-router-dom";
 import { IdentityProvider, useIdentity } from "./IdentityContext.jsx";
 import History from "./pages/History.jsx";
 import Leaderboard from "./pages/Leaderboard.jsx";
-import DareDetail from "./pages/DareDetail.jsx";
+import ChallengeDetail from "./pages/ChallengeDetail.jsx";
 
 function IdentityPicker() {
   const { members, userId, selectUser } = useIdentity();
@@ -27,12 +27,12 @@ export default function App() {
   return (
     <IdentityProvider>
       <div className="app-shell">
-        <h1>dare-app</h1>
+        <h1>challenge-app</h1>
         <IdentityPicker />
         <Routes>
           <Route path="/" element={<History />} />
           <Route path="/leaderboard" element={<Leaderboard />} />
-          <Route path="/dare/:assignmentId" element={<DareDetail />} />
+          <Route path="/challenge/:assignmentId" element={<ChallengeDetail />} />
         </Routes>
         <nav className="tabbar">
           <NavLink to="/" className={({ isActive }) => (isActive ? "active" : "")}>

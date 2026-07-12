@@ -10,7 +10,7 @@ groups/{groupId}
   name: string
   memberIds: string[]          // refs into users
   timezone: string             // e.g. "America/New_York"
-  sendWindowStart: string      // "09:00" - earliest the daily dare can go out
+  sendWindowStart: string      // "09:00" - earliest the daily challenge can go out
   sendWindowEnd: string        // "20:00" - latest
   deadlineHours: number        // hours after send before it auto-expires (default 4)
   createdAt: timestamp
@@ -27,23 +27,23 @@ users/{userId}
   createdAt: timestamp
 ```
 
-## `dares`
+## `challenges`
 The curated pool. Global for now (not per-group) since one person is curating for one group — easy to add `groupId` scoping later if this expands.
 
 ```
-dares/{dareId}
+challenges/{challengeId}
   text: string            // "Send your ex a 'thinking of you' text and screenshot it"
   active: boolean         // false = retired from rotation, keeps history intact
   createdAt: timestamp
 ```
 
 ## `assignments`
-One doc per day per group — the actual "today's dare" instance. This is the hub everything else hangs off.
+One doc per day per group — the actual "today's challenge" instance. This is the hub everything else hangs off.
 
 ```
 assignments/{assignmentId}
   groupId: string
-  dareId: string
+  challengeId: string
   assignedUserId: string       // who got picked today
   sentAt: timestamp            // randomized within group's send window
   deadlineAt: timestamp        // sentAt + deadlineHours
@@ -83,5 +83,5 @@ leaderboardStats/{groupId}_{userId}
 ## Access pattern notes
 - **Video gating**: to check if `userId` can watch the proof for `assignmentId`, read `assignments/{assignmentId}/predictions/{userId}` and check `correct === true`. Enforce this server-side in the signed-URL endpoint, not just client-side.
 - **"Did I already predict today"**: same doc read as above, before `correct` is set.
-- **Daily picker**: query `dares` where `active == true`, pick random client-side (small pool, no need for a random-sort trick yet).
+- **Daily picker**: query `challenges` where `active == true`, pick random client-side (small pool, no need for a random-sort trick yet).
 - **History page**: query `assignments` where `groupId == X` order by `sentAt desc`.

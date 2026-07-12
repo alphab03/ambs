@@ -1,6 +1,6 @@
-# dare-app
+# challenge-app
 
-Daily-dare SMS game for a closed friend group, with a points-based prediction
+A daily-challenge SMS game for a closed friend group, with a points-based prediction
 market on whether the assignee actually pulls it off. Predicting correctly
 unlocks the proof video; predicting wrong keeps it locked. No real money —
 points only.
@@ -15,14 +15,14 @@ docs/        Firestore schema reference
 
 ## How it works
 
-1. Once a day, the scheduler picks a random active dare and a random group
+1. Once a day, the scheduler picks a random active challenge and a random group
    member, at a random time inside the group's send window, and texts it to
    them via Twilio.
 2. They have until the deadline (default 4 hours) to do it and upload proof
    through the dashboard. No proof by the deadline auto-resolves to "no."
 3. Before the deadline, other members predict yes/no from the dashboard.
    Predictions lock the moment they're submitted.
-4. When the dare resolves, predictions are scored and the leaderboard updates.
+4. When the challenge resolves, predictions are scored and the leaderboard updates.
    Only members who predicted correctly can watch the proof video.
 
 ## Local setup
@@ -33,7 +33,7 @@ docs/        Firestore schema reference
 cd backend
 cp .env.example .env        # fill in Firebase + Twilio values
 npm install
-npm run seed                # loads the starter pool of 7 dares
+npm run seed                # loads the starter pool of 7 challenges
 npm run dev
 ```
 
@@ -73,10 +73,10 @@ since you can't commit `serviceAccountKey.json`.
   beyond that.
 - Proof upload is dashboard-only; MMS-to-webhook proof submission from the
   SMS thread itself is a natural v1 addition.
-- `dares` pool is global, not per-group — matches "one curated group for
+- `challenges` pool is global, not per-group — matches "one curated group for
   now"; add `groupId` scoping if this grows to multiple groups.
-- No admin UI for managing groups/members/dare pool beyond a couple of
-  bare `POST /api/dares/pool` and Firestore console edits.
+- No admin UI for managing groups/members/challenge pool beyond a couple of
+  bare `POST /api/challenges/pool` and Firestore console edits.
 
 ## Pushing to GitHub
 

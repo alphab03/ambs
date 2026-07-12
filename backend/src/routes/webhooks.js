@@ -27,7 +27,7 @@ router.post("/sms", async (req, res) => {
       .get();
 
     if (assignmentSnap.empty) {
-      return respond(res, "No active dare for you right now. Check the dashboard for what's happened so far.");
+      return respond(res, "No active challenge for you right now. Check the dashboard for what's happened so far.");
     }
 
     // Proof is submitted via the dashboard (MMS-to-webhook media handling is a

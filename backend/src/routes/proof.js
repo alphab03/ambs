@@ -3,7 +3,7 @@ import multer from "multer";
 import { randomUUID } from "crypto";
 import { db, bucket, admin } from "../config/firebase.js";
 import { COLLECTIONS, ASSIGNMENT_STATUS } from "../models/schema.js";
-import { resolveAssignment } from "../services/dareScheduler.js";
+import { resolveAssignment } from "../services/challengeScheduler.js";
 import { canViewProof } from "../services/predictionService.js";
 
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 100 * 1024 * 1024 } });
@@ -20,7 +20,7 @@ router.post("/:assignmentId", upload.single("file"), async (req, res) => {
   const assignment = doc.data();
 
   if (assignment.status !== ASSIGNMENT_STATUS.PENDING) {
-    return res.status(400).json({ error: "This dare is already resolved" });
+    return res.status(400).json({ error: "This challenge is already resolved" });
   }
   if (Date.now() > assignment.deadlineAt.toDate().getTime()) {
     return res.status(400).json({ error: "Deadline has passed" });

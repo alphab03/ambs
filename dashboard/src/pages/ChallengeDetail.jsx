@@ -4,7 +4,7 @@ import { useIdentity } from "../IdentityContext.jsx";
 import { api } from "../api/client.js";
 import LockedVideo from "../components/LockedVideo.jsx";
 
-export default function DareDetail() {
+export default function ChallengeDetail() {
   const { assignmentId } = useParams();
   const { userId } = useIdentity();
   const [assignment, setAssignment] = useState(null);
@@ -14,7 +14,7 @@ export default function DareDetail() {
 
   useEffect(() => {
     // Reuse the history endpoint's shape by pulling the one assignment from the list.
-    // A dedicated GET /api/dares/:id is a natural follow-up once this is real traffic.
+    // A dedicated GET /api/challenges/:id is a natural follow-up once this is real traffic.
     api.history(100).then((rows) => setAssignment(rows.find((r) => r.id === assignmentId)));
   }, [assignmentId]);
 
@@ -41,7 +41,7 @@ export default function DareDetail() {
         <span className={`pill ${assignment.status === "pending" ? "pending" : assignment.status === "completed" ? "yes" : "no"}`}>
           {assignment.status}
         </span>
-        <h2>{assignment.dareText}</h2>
+        <h2>{assignment.challengeText}</h2>
         <p style={{ color: "var(--text-dim)" }}>Assigned to {assignment.assignedUserName}</p>
       </div>
 

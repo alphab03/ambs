@@ -7,7 +7,7 @@ const IdentityContext = createContext(null);
 
 export function IdentityProvider({ children }) {
   const [members, setMembers] = useState([]);
-  const [userId, setUserId] = useState(() => localStorage.getItem("dare-app:userId") || "");
+  const [userId, setUserId] = useState(() => localStorage.getItem("challenge-app:userId") || "");
 
   useEffect(() => {
     api.users().then(setMembers).catch(console.error);
@@ -15,7 +15,7 @@ export function IdentityProvider({ children }) {
 
   function selectUser(id) {
     setUserId(id);
-    localStorage.setItem("dare-app:userId", id);
+    localStorage.setItem("challenge-app:userId", id);
   }
 
   const me = members.find((m) => m.id === userId) || null;

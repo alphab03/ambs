@@ -6,14 +6,14 @@ export async function submitPrediction({ assignmentId, predictorUserId, call }) 
   const assignment = (await assignmentRef.get()).data();
 
   if (!assignment) throw new Error("Assignment not found");
-  if (assignment.status !== "pending") throw new Error("Predictions are closed for this dare");
+  if (assignment.status !== "pending") throw new Error("Predictions are closed for this challenge");
   if (predictorUserId === assignment.assignedUserId) {
-    throw new Error("You can't predict on your own dare");
+    throw new Error("You can't predict on your own challenge");
   }
 
   const predictionRef = assignmentRef.collection("predictions").doc(predictorUserId);
   const existing = await predictionRef.get();
-  if (existing.exists) throw new Error("You already predicted on this dare");
+  if (existing.exists) throw new Error("You already predicted on this challenge");
 
   await predictionRef.set({
     predictorUserId,
@@ -25,7 +25,7 @@ export async function submitPrediction({ assignmentId, predictorUserId, call }) 
   return { assignmentId, predictorUserId, call };
 }
 
-// Called by dareScheduler.resolveAssignment once an outcome is known.
+// Called by challengeScheduler.resolveAssignment once an outcome is known.
 export async function scorePredictions(assignmentId, outcome) {
   const assignmentRef = db().collection(COLLECTIONS.ASSIGNMENTS).doc(assignmentId);
   const groupId = (await assignmentRef.get()).data().groupId;

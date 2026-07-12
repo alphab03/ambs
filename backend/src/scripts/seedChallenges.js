@@ -1,8 +1,8 @@
-// One-off: node src/scripts/seedDares.js
+// One-off: node src/scripts/seedChallenges.js
 import { db, admin } from "../config/firebase.js";
 import { COLLECTIONS } from "../models/schema.js";
 
-const STARTER_DARES = [
+const STARTER_CHALLENGES = [
   "Text your last text-message sender and tell them one honest thing you never said.",
   "Post an unedited selfie taken right now, no filter, no retake.",
   "Call a family member and tell them why you appreciate them, on speakerphone, and record it.",
@@ -14,12 +14,12 @@ const STARTER_DARES = [
 
 async function seed() {
   const batch = db().batch();
-  for (const text of STARTER_DARES) {
-    const ref = db().collection(COLLECTIONS.DARES).doc();
+  for (const text of STARTER_CHALLENGES) {
+    const ref = db().collection(COLLECTIONS.CHALLENGES).doc();
     batch.set(ref, { text, active: true, createdAt: admin.firestore.FieldValue.serverTimestamp() });
   }
   await batch.commit();
-  console.log(`Seeded ${STARTER_DARES.length} dares.`);
+  console.log(`Seeded ${STARTER_CHALLENGES.length} challenges.`);
 }
 
 seed().then(() => process.exit(0)).catch((err) => {

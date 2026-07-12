@@ -4,7 +4,7 @@
 export const COLLECTIONS = {
   GROUPS: "groups",
   USERS: "users",
-  DARES: "dares",
+  CHALLENGES: "challenges",
   ASSIGNMENTS: "assignments",
   LEADERBOARD_STATS: "leaderboardStats",
 };

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import DareCard from "../components/DareCard.jsx";
+import ChallengeCard from "../components/ChallengeCard.jsx";
 import { api } from "../api/client.js";
 
 export default function History() {
@@ -11,12 +11,12 @@ export default function History() {
   }, []);
 
   if (error) return <p>{error}</p>;
-  if (!assignments.length) return <p style={{ color: "var(--text-dim)" }}>No dares yet.</p>;
+  if (!assignments.length) return <p style={{ color: "var(--text-dim)" }}>No challenges yet.</p>;
 
   return (
     <div>
       {assignments.map((a) => (
-        <DareCard key={a.id} assignment={a} />
+        <ChallengeCard key={a.id} assignment={a} />
       ))}
     </div>
   );

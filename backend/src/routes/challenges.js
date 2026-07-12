@@ -19,14 +19,14 @@ router.get("/history", async (req, res) => {
   const assignments = await Promise.all(
     snap.docs.map(async (doc) => {
       const data = doc.data();
-      const [dareDoc, userDoc] = await Promise.all([
-        db().collection(COLLECTIONS.DARES).doc(data.dareId).get(),
+      const [challengeDoc, userDoc] = await Promise.all([
+        db().collection(COLLECTIONS.CHALLENGES).doc(data.challengeId).get(),
         db().collection(COLLECTIONS.USERS).doc(data.assignedUserId).get(),
       ]);
       return {
         id: doc.id,
         ...data,
-        dareText: dareDoc.data()?.text,
+        challengeText: challengeDoc.data()?.text,
         assignedUserName: userDoc.data()?.name,
       };
     })
@@ -37,14 +37,14 @@ router.get("/history", async (req, res) => {
 
 // Raw pool management (admin use — no auth yet, add before shipping past your own use).
 router.get("/pool", async (_req, res) => {
-  const snap = await db().collection(COLLECTIONS.DARES).get();
+  const snap = await db().collection(COLLECTIONS.CHALLENGES).get();
   res.json(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
 });
 
 router.post("/pool", async (req, res) => {
   const { text } = req.body;
   if (!text) return res.status(400).json({ error: "text is required" });
-  const ref = await db().collection(COLLECTIONS.DARES).add({
+  const ref = await db().collection(COLLECTIONS.CHALLENGES).add({
     text,
     active: true,
     createdAt: new Date(),

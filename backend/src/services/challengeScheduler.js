@@ -2,7 +2,7 @@ import cron from "node-cron";
 import { randomUUID } from "crypto";
 import { db, admin } from "../config/firebase.js";
 import { COLLECTIONS, ASSIGNMENT_STATUS } from "../models/schema.js";
-import { sendSms, dareMessage, resultMessage } from "./smsService.js";
+import { sendSms, challengeMessage, resultMessage } from "./smsService.js";
 
 function randomFrom(arr) {
   return arr[Math.floor(Math.random() * arr.length)];
@@ -17,8 +17,8 @@ function randomTimeWithinWindow(startHHMM, endHHMM) {
   return startMin + Math.floor(Math.random() * Math.max(endMin - startMin, 1));
 }
 
-async function getActiveDares() {
-  const snap = await db().collection(COLLECTIONS.DARES).where("active", "==", true).get();
+async function getActiveChallenges() {
+  const snap = await db().collection(COLLECTIONS.CHALLENGES).where("active", "==", true).get();
   return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
 }
 
@@ -34,17 +34,17 @@ async function getUser(userId) {
 }
 
 /**
- * Creates today's assignment for a group: picks a random dare + random member + random
+ * Creates today's assignment for a group: picks a random challenge + random member + random
  * send time within the group's window, then sends the SMS. Intended to run once per day
  * (e.g. shortly after midnight in the group's timezone) via the cron job below.
  */
 export async function createDailyAssignment(groupId) {
   const group = await getGroup(groupId);
-  const dares = await getActiveDares();
-  if (dares.length === 0) throw new Error("No active dares in the pool");
+  const challenges = await getActiveChallenges();
+  if (challenges.length === 0) throw new Error("No active challenges in the pool");
   if (!group.memberIds?.length) throw new Error("Group has no members");
 
-  const dare = randomFrom(dares);
+  const challenge = randomFrom(challenges);
   const assignedUserId = randomFrom(group.memberIds);
   const sendMinute = randomTimeWithinWindow(
     group.sendWindowStart || "09:00",
@@ -64,7 +64,7 @@ export async function createDailyAssignment(groupId) {
     .doc(assignmentId)
     .set({
       groupId,
-      dareId: dare.id,
+      challengeId: challenge.id,
       assignedUserId,
       sentAt: admin.firestore.Timestamp.fromDate(sentAt),
       deadlineAt: admin.firestore.Timestamp.fromDate(deadlineAt),
@@ -75,7 +75,7 @@ export async function createDailyAssignment(groupId) {
       resolvedAt: null,
     });
 
-  return { assignmentId, dare, assignedUserId, sentAt, deadlineAt };
+  return { assignmentId, challenge, assignedUserId, sentAt, deadlineAt };
 }
 
 // Sends the SMS for an assignment that's already been created. Split out from
@@ -84,14 +84,14 @@ export async function createDailyAssignment(groupId) {
 export async function sendAssignmentSms(assignmentId) {
   const doc = await db().collection(COLLECTIONS.ASSIGNMENTS).doc(assignmentId).get();
   const assignment = doc.data();
-  const [dareDoc, user] = await Promise.all([
-    db().collection(COLLECTIONS.DARES).doc(assignment.dareId).get(),
+  const [challengeDoc, user] = await Promise.all([
+    db().collection(COLLECTIONS.CHALLENGES).doc(assignment.challengeId).get(),
     getUser(assignment.assignedUserId),
   ]);
 
   await sendSms(
     user.phone,
-    dareMessage({ dareText: dareDoc.data().text, deadlineAt: assignment.deadlineAt.toDate() })
+    challengeMessage({ challengeText: challengeDoc.data().text, deadlineAt: assignment.deadlineAt.toDate() })
   );
 }
 

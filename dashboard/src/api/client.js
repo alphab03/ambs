@@ -15,7 +15,7 @@ async function request(path, options = {}) {
 
 export const api = {
   users: () => request(`/api/users?groupId=${GROUP_ID}`),
-  history: (limit = 30) => request(`/api/dares/history?groupId=${GROUP_ID}&limit=${limit}`),
+  history: (limit = 30) => request(`/api/challenges/history?groupId=${GROUP_ID}&limit=${limit}`),
   leaderboard: () => request(`/api/leaderboard?groupId=${GROUP_ID}`),
   predict: (assignmentId, predictorUserId, call) =>
     request(`/api/predictions`, {
