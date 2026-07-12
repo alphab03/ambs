@@ -16,14 +16,7 @@ async function request(path, options = {}) {
 export const api = {
   users: () => request(`/api/users?groupId=${GROUP_ID}`),
   history: (limit = 30) => request(`/api/challenges/history?groupId=${GROUP_ID}&limit=${limit}`),
-  leaderboard: () => request(`/api/leaderboard?groupId=${GROUP_ID}`),
-  predict: (assignmentId, predictorUserId, call) =>
-    request(`/api/predictions`, {
-      method: "POST",
-      body: JSON.stringify({ assignmentId, predictorUserId, call }),
-    }),
-  proofViewUrl: (assignmentId, userId) =>
-    request(`/api/proof/${assignmentId}/view?userId=${userId}`),
+  proofViewUrl: (assignmentId) => request(`/api/proof/${assignmentId}/view`),
   uploadProof: (assignmentId, file) => {
     const form = new FormData();
     form.append("file", file);
