@@ -4,7 +4,6 @@ import { randomUUID } from "crypto";
 import { db, bucket, admin } from "../config/firebase.js";
 import { COLLECTIONS, ASSIGNMENT_STATUS } from "../models/schema.js";
 import { resolveAssignment } from "../services/challengeScheduler.js";
-import { canViewProof } from "../services/predictionService.js";
 
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 100 * 1024 * 1024 } });
 const router = Router();
@@ -41,16 +40,12 @@ router.post("/:assignmentId", upload.single("file"), async (req, res) => {
   res.status(201).json({ path });
 });
 
-// Gated fetch: only returns a signed URL if this user predicted correctly.
+// Everyone in the group can see proof once it's posted — no more predict-to-unlock gate.
 router.get("/:assignmentId/view", async (req, res) => {
   const { assignmentId } = req.params;
-  const { userId } = req.query;
-  if (!userId) return res.status(400).json({ error: "userId is required" });
-
-  const allowed = await canViewProof(assignmentId, userId);
-  if (!allowed) return res.status(403).json({ error: "Locked — you didn't predict correctly on this one" });
 
   const doc = await db().collection(COLLECTIONS.ASSIGNMENTS).doc(assignmentId).get();
+  if (!doc.exists) return res.status(404).json({ error: "assignment not found" });
   const { proofPath } = doc.data();
   if (!proofPath) return res.status(404).json({ error: "No proof on file" });
 
