@@ -17,6 +17,50 @@ function randomTimeWithinWindow(startHHMM, endHHMM) {
   return startMin + Math.floor(Math.random() * Math.max(endMin - startMin, 1));
 }
 
+// --- Timezone-aware date helpers ---
+// Railway's containers run on whatever clock the host defaults to (no TZ env var is
+// set, so Node treats "local" as UTC). Groups configure a `timezone` (IANA name, e.g.
+// "America/New_York") and expect sendWindowStart/End to mean wall-clock time THERE, not
+// on the server. These helpers use Node's built-in Intl (no extra dependency) to convert
+// between the two correctly, including across DST changes.
+
+// Calendar date (Y/M/D) that `date` falls on when viewed in `timeZone`.
+function zonedYMD(date, timeZone) {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(date);
+  const get = (type) => Number(parts.find((p) => p.type === type).value);
+  return { year: get("year"), month: get("month"), day: get("day") };
+}
+
+// Offset (ms) such that: wall-clock-in-timeZone = utcInstant + offset.
+function tzOffsetMs(timeZone, utcInstant) {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone,
+    hourCycle: "h23",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+  }).formatToParts(utcInstant);
+  const get = (type) => Number(parts.find((p) => p.type === type).value);
+  const asUtc = Date.UTC(get("year"), get("month") - 1, get("day"), get("hour"), get("minute"), get("second"));
+  return asUtc - utcInstant.getTime();
+}
+
+// Builds the real UTC Date corresponding to `minutesSinceMidnight` on the given Y/M/D,
+// interpreted as wall-clock time in `timeZone`.
+function zonedTimeToUtc({ year, month, day }, minutesSinceMidnight, timeZone) {
+  const guessUtcMs = Date.UTC(year, month - 1, day, 0, minutesSinceMidnight, 0, 0);
+  const offset = tzOffsetMs(timeZone, new Date(guessUtcMs));
+  return new Date(guessUtcMs - offset);
+}
+
 async function getActiveChallenges() {
   const snap = await db().collection(COLLECTIONS.CHALLENGES).where("active", "==", true).get();
   return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
@@ -44,6 +88,7 @@ export async function createDailyAssignment(groupId) {
   if (challenges.length === 0) throw new Error("No active challenges in the pool");
   if (!group.memberIds?.length) throw new Error("Group has no members");
 
+  const timeZone = group.timezone || "America/New_York";
   const challenge = randomFrom(challenges);
   const assignedUserId = randomFrom(group.memberIds);
   const sendMinute = randomTimeWithinWindow(
@@ -52,9 +97,12 @@ export async function createDailyAssignment(groupId) {
   );
 
   const now = new Date();
-  const sentAt = new Date(now);
-  sentAt.setHours(0, sendMinute, 0, 0);
-  if (sentAt < now) sentAt.setDate(sentAt.getDate() + 1); // window already passed today
+  let sentAt = zonedTimeToUtc(zonedYMD(now, timeZone), sendMinute, timeZone);
+  if (sentAt < now) {
+    // Window already passed today in the group's timezone — use tomorrow instead.
+    const tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+    sentAt = zonedTimeToUtc(zonedYMD(tomorrow, timeZone), sendMinute, timeZone);
+  }
 
   const deadlineAt = new Date(sentAt.getTime() + (group.deadlineHours || 4) * 60 * 60 * 1000);
 
@@ -136,17 +184,34 @@ export async function resolveAssignment(assignmentId, outcome) {
 }
 
 // Wire the two recurring jobs. Call this once from server.js.
-export function startScheduler({ groupId }) {
-  // Every day at 00:05, create tomorrow's assignment (send time is randomized inside the window).
-  cron.schedule("5 0 * * *", async () => {
-    try {
-      const { assignmentId, sentAt } = await createDailyAssignment(groupId);
-      const delayMs = sentAt.getTime() - Date.now();
-      setTimeout(() => sendAssignmentSms(assignmentId).catch(console.error), Math.max(delayMs, 0));
-    } catch (err) {
-      console.error("createDailyAssignment failed:", err);
-    }
-  });
+export async function startScheduler({ groupId }) {
+  // The server's own clock isn't necessarily the group's timezone (Railway defaults to
+  // UTC), so fetch the group up front and schedule the daily job in ITS timezone —
+  // otherwise "00:05" fires at server-midnight, which can be hours off from the group's
+  // actual local midnight.
+  let timeZone = "America/New_York";
+  try {
+    const group = await getGroup(groupId);
+    timeZone = group.timezone || timeZone;
+  } catch (err) {
+    console.error(`startScheduler: couldn't load group ${groupId}, defaulting timezone to ${timeZone}:`, err);
+  }
+
+  // Every day at 00:05 in the group's timezone, create the day's assignment (send time is
+  // randomized inside the window, also computed in the group's timezone).
+  cron.schedule(
+    "5 0 * * *",
+    async () => {
+      try {
+        const { assignmentId, sentAt } = await createDailyAssignment(groupId);
+        const delayMs = sentAt.getTime() - Date.now();
+        setTimeout(() => sendAssignmentSms(assignmentId).catch(console.error), Math.max(delayMs, 0));
+      } catch (err) {
+        console.error("createDailyAssignment failed:", err);
+      }
+    },
+    { timezone: timeZone }
+  );
 
   // Every 5 minutes, sweep for expired assignments.
   cron.schedule("*/5 * * * *", () => {
